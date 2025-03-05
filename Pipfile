@@ -8,6 +8,7 @@ icecream = "*"
 fastapi = {extras = ["all"], version = "*"}
 uvicorn = "*"
 sqlalchemy = "*"
+asyncpg = "*"
 
 [dev-packages]
 
