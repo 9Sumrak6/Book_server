@@ -10,7 +10,7 @@ import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from src.configurations.settings import settings
+from src.config.settings import settings
 from src.models import books 
 from src.models.base import BaseModel
 from src.models.books import Book 
@@ -71,7 +71,7 @@ def override_get_async_session(db_session):
 # Поэтому, на время запуска тестов мы подменяем там зависимость с сессией
 @pytest.fixture(scope="function")
 def test_app(override_get_async_session):
-    from src.configurations.database import get_async_session
+    from src.config.db import get_async_session
     from src.main import app
 
     app.dependency_overrides[get_async_session] = override_get_async_session

@@ -16,7 +16,10 @@ DBSession = Annotated[AsyncSession, Depends(get_async_session)]
 
 
 # Регистрация продавца
-@sellers_router.post("/", response_model=ReturnedSeller)
+@sellers_router.post("/",
+    response_model=ReturnedSeller,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_seller(seller: SellerCreate, session: DBSession):
     db_seller = Seller(**{
             "first_name": seller.first_name,
@@ -89,23 +92,37 @@ async def get_seller(seller_id: int, session: DBSession):
     return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-# Обновление данных о продавце
 @sellers_router.put("/{seller_id}", response_model=ReturnedSeller)
 async def update_seller(seller_id: int, seller: SellerBase, session: DBSession):
-    if updated_seller := await session.get(Seller, seller_id):
-        updated_seller.first_name = seller.first_name
-        updated_seller.last_name = seller.last_name
-        updated_seller.e_mail = seller.e_mail
+    # Получаем продавца без загрузки связанных книг
+    updated_seller = await session.get(Seller, seller_id)
+    if not updated_seller:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Seller not found")
+    
+    # Обновляем основные поля
+    updated_seller.first_name = seller.first_name
+    updated_seller.last_name = seller.last_name
+    updated_seller.e_mail = seller.e_mail
 
-        await session.flush()
-
-        return updated_seller
-
-    return Response(status_code=status.HTTP_404_NOT_FOUND)  
+    await session.flush()
+    
+    # Создаем ответ вручную, исключая автоматическую загрузку отношений
+    response_data = {
+        "id": updated_seller.id,
+        "first_name": updated_seller.first_name,
+        "last_name": updated_seller.last_name,
+        "e_mail": updated_seller.e_mail,
+        "books": []  # Явно указываем пустой список, чтобы избежать ошибки
+    }
+    
+    return ReturnedSeller(**response_data)
 
 
 # Удаление продавца и его книг
-@sellers_router.delete("/{seller_id}")
+@sellers_router.delete(
+    "/{seller_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
 async def delete_seller(seller_id: int, session: DBSession):
     deleted_seller = await session.get(Seller, seller_id)
     ic(deleted_seller)

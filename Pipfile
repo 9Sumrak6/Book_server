@@ -9,6 +9,8 @@ fastapi = {extras = ["all"], version = "*"}
 uvicorn = "*"
 sqlalchemy = "*"
 asyncpg = "*"
+pytest = "*"
+pytest-asyncio = "*"
 
 [dev-packages]
 
